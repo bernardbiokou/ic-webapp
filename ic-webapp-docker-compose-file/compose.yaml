@@ -1,0 +1,70 @@
+version: '3.3'
+services:
+    ic-webapp:
+      container_name: ic-webapp
+      ports:
+        - '8080:8080'
+      environment:
+        - "ODOO_URL=http://${HOST_IP}:8069"
+        - "PGADMIN_URL=http://${HOST_IP}:5050"
+      image: 'biobern/ic-webapp:v1.0'
+      networks:
+        - ic_webapp
+
+    web:
+      image: odoo:16.0
+      depends_on:
+        - db
+      ports:
+        - "8069:8069"
+      volumes:
+        - odoo-web-data:/var/lib/odoo
+        - ./config:/etc/odoo
+        - ./addons:/mnt/extra-addons
+      environment:
+        - PASSWORD_FILE=/run/secrets/postgresql_password
+      secrets:
+        - postgresql_password
+      networks:
+        - odoo_network
+
+    db:
+      image: postgres:15
+      environment:
+        - POSTGRES_DB=postgres
+        - POSTGRES_PASSWORD_FILE=/run/secrets/postgresql_password
+        - POSTGRES_USER=odoo
+        - PGDATA=/var/lib/postgresql/data/pgdata
+      volumes:
+        - odoo-db-data:/var/lib/postgresql/data/pgdata
+      secrets:
+        - postgresql_password
+      networks:
+        - odoo_network
+
+    pgadmin:
+      container_name: pgadmin
+      image: dpage/pgadmin4
+      networks:
+        - odoo_network
+      environment:
+        - 'PGADMIN_DEFAULT_EMAIL=bbio@duck.com'
+        - 'PGADMIN_DEFAULT_PASSWORD=odoo_pgadmin_password'
+      ports:
+        - "5050:80"
+      volumes:
+        - ${PWD}/servers.json:/pgadmin4/servers.json
+        - 'pgadmin_data:/var/lib/pgadmin'
+
+volumes:
+  odoo-web-data:
+  odoo-db-data:
+  pgadmin_data:
+
+secrets:
+  postgresql_password:
+    file: odoo_pg_pass      
+
+networks:
+  odoo_network:
+  ic_webapp:
