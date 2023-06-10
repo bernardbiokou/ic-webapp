@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+
+kind: Deployment
+
+metadata:
+
+  name: odoo
+
+  labels:
+
+    app: odoo
+    
+    tier: frontend
+
+spec:
+
+  replicas: 1
+
+  selector:
+
+    matchLabels:
+
+      app: odoo
+    
+      tier: frontend
+
+  template:
+
+    metadata:
+
+      labels:
+
+        app: odoo
+        
+        tier: frontend
+        
+    spec:
+
+      containers:
+
+      - name: odoo
+
+        image: odoo:16.0
+
+        ports:
+
+        - containerPort: 8069
+        
+        env:
+
+          - name: USER
+                        
+            value: alice
+
+          - name: PASSWORD
+
+            value: secret
+
+          - name: HOST
+
+            value: postgres-odoo
+
+        volumeMounts:
+
+          - name: odoo-config-storage
+
+            mountPath: /etc/odoo
+
+          - name: odoo-lib-storage
+
+            mountPath: /var/lib/odoo
+
+          - name: odoo-addons-storage
+
+            mountPath: /mnt/extra-addons
+
+      volumes:
+
+        - name: odoo-config-storage
+
+          hostPath: 
+            
+            path: odoo_config_dossier
+
+        - name: odoo-lib-storage
+
+          persistentVolumeClaim:
+
+            claimName: odoo-pvc
+
+        - name: odoo-addons-storage
+
+          hostPath:
+
+            path: odoo_addons_dossier
